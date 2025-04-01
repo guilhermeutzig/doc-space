@@ -1,5 +1,5 @@
 import { RequestHandler, Router } from "express";
-import { logout, refreshToken, signIn } from "../handlers/auth";
+import { logout, refreshToken, signIn } from "../handlers/auth.js";
 
 const router = Router();
 

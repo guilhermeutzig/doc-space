@@ -1,6 +1,6 @@
 import { Router, RequestHandler } from "express";
-import { getUsers, registerUser } from "../handlers/users";
-import { authenticateToken } from "../middlewares/auth";
+import { getUsers, registerUser } from "../handlers/users.js";
+import { authenticateToken } from "../middlewares/auth.js";
 
 const router = Router();
 

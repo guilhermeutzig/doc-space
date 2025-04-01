@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import sql from "../database";
+import sql from "../database.js";
 import { PostgresError } from "postgres";
 import bcrypt from "bcrypt";
 

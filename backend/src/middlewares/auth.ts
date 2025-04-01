@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import config from "../config";
+import config from "../config/index.js";
 import { NextFunction, Request, Response } from "express";
 
 type User = {
@@ -17,9 +17,9 @@ function authenticateToken(
   response: Response,
   next: NextFunction
 ) {
-  const authHeader = request.headers["authorization"];
+  const authHeader = request.headers?.["authorization"];
   const accessToken = (authHeader && authHeader.split(" ")[1]) || "";
-  const refreshToken = request.cookies["refreshToken"] || "";
+  const refreshToken = request.cookies?.["refreshToken"] || "";
 
   if (!accessToken && !refreshToken) {
     return response.status(401).send("Access Denied. No token provided.");
