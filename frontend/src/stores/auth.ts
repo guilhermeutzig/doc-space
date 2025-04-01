@@ -56,8 +56,6 @@ export const useAuthStore = defineStore('auth', () => {
       .then((response) => {
         const token = response.headers['authorization']?.split(' ')[1]
 
-        console.log('token', token)
-
         if (!token) {
           throw new Error('No token received from server')
         }
