@@ -1,8 +1,10 @@
-import { Router } from "express";
-import { signIn } from "../handlers/auth";
+import { RequestHandler, Router } from "express";
+import { logout, refreshToken, signIn } from "../handlers/auth";
 
 const router = Router();
 
-router.post("/signin", signIn);
+router.post("/signin", signIn as RequestHandler);
+router.get("/refresh-token", refreshToken as RequestHandler);
+router.delete("/logout", logout as RequestHandler);
 
 export default router;
