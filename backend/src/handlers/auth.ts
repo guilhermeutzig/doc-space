@@ -31,14 +31,13 @@ export async function signIn(request: Request, response: Response) {
       expiresIn: "3d",
     });
 
-    response
-      .cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: config.nodeEnv === "production",
-        maxAge: 3 * 24 * 60 * 60 * 1000,
-      })
-      .header("Authorization", `Bearer ${accessToken}`)
-      .send({ user });
+    response.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: config.nodeEnv === "production",
+      maxAge: 3 * 24 * 60 * 60 * 1000,
+    });
+    response.setHeader("Authorization", `Bearer ${accessToken}`);
+    response.send({ user });
   } catch (error) {
     console.error(error);
     response.status(500).send({ error: "Error signing in" });
@@ -63,9 +62,8 @@ export async function refreshToken(request: Request, response: Response) {
       { expiresIn: "2m" }
     );
 
-    response
-      .header("Authorization", `Bearer ${accessToken}`)
-      .send(decoded.user);
+    response.setHeader("Authorization", `Bearer ${accessToken}`);
+    response.send(decoded.user);
   } catch (error) {
     return response.status(400).send("Invalid refresh token.");
   }
