@@ -71,9 +71,10 @@ export async function refreshToken(request: Request, response: Response) {
   }
 }
 
-export async function logout(request: Request, response: Response) {
+export async function logout(_: Request, response: Response) {
   try {
     response.clearCookie("refreshToken");
+    response.removeHeader("Authorization");
     response.status(200).send({ message: "Logged out" });
   } catch (error: unknown) {
     console.error(error);
