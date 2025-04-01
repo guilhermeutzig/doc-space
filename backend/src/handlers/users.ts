@@ -1,17 +1,19 @@
 import { Request, Response } from "express";
 import sql from "../database";
 import { PostgresError } from "postgres";
+import bcrypt from "bcrypt";
 
 export async function getUsers(request: Request, response: Response) {
-  const result = await sql`SELECT * FROM users`;
+  const result = await sql`SELECT id, name, email FROM users`;
   response.send(result);
 }
 
 export async function createUser(request: Request, response: Response) {
-  const { name, email } = request.body;
+  const { name, email, password } = request.body;
 
   try {
-    await sql`INSERT INTO users (name, email) VALUES (${name}, ${email})`;
+    const encryptedPassword = await bcrypt.hash(password, 10);
+    await sql`INSERT INTO users (name, email, password) VALUES (${name}, ${email}, ${encryptedPassword})`;
     response.status(201).send({ message: "User created successfully" });
   } catch (err) {
     const error = err as PostgresError;
