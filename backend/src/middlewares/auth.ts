@@ -17,21 +17,45 @@ function authenticateToken(
   response: Response,
   next: NextFunction
 ) {
-  const authHeader = request.headers["authorization"]; // Bearer <token>
-  const token = authHeader && authHeader.split(" ")[1];
+  const authHeader = request.headers["authorization"];
+  const accessToken = (authHeader && authHeader.split(" ")[1]) || "";
+  const refreshToken = request.cookies["refreshToken"] || "";
 
-  if (!token) {
-    return response.status(401).send({ error: "Unauthorized" });
+  if (!accessToken && !refreshToken) {
+    return response.status(401).send("Access Denied. No token provided.");
   }
 
-  jwt.verify(token, config.accessTokenSecret, (err, user) => {
-    if (err) {
-      return response.status(403).send({ error: "Invalid access token" });
+  try {
+    const decoded = jwt.verify(accessToken, config.accessTokenSecret) as {
+      user: User;
+    };
+    (request as AuthenticatedRequest).user = decoded.user;
+    return next();
+  } catch (error) {
+    if (!refreshToken) {
+      return response
+        .status(401)
+        .send("Access Denied. No refresh token provided.");
     }
 
-    (request as AuthenticatedRequest).user = user as User;
-    next();
-  });
+    try {
+      const decoded = jwt.verify(refreshToken, config.refreshTokenSecret) as {
+        user: User;
+      };
+      const newAccessToken = jwt.sign(
+        { user: decoded.user },
+        config.accessTokenSecret,
+        { expiresIn: "2m" }
+      );
+
+      response.header("Authorization", `Bearer ${newAccessToken}`);
+
+      (request as AuthenticatedRequest).user = decoded.user;
+      return next();
+    } catch (error) {
+      return response.status(401).send("Invalid Token.");
+    }
+  }
 }
 
 export { authenticateToken };

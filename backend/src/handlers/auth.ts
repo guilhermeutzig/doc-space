@@ -3,7 +3,7 @@ import sql from "../database";
 import bcrypt from "bcrypt";
 import config from "../config";
 import jwt, { VerifyErrors } from "jsonwebtoken";
-import { getJwtTokens } from "../utils/jwt";
+import { User } from "../types";
 
 export async function signIn(request: Request, response: Response) {
   try {
@@ -24,25 +24,21 @@ export async function signIn(request: Request, response: Response) {
         .send({ error: "Invalid email/password combination" });
     }
 
-    const tokens = getJwtTokens({
-      id: user.id,
-      name: user.name,
-      email: user.email,
+    const accessToken = jwt.sign({ user }, config.accessTokenSecret, {
+      expiresIn: "2m",
+    });
+    const refreshToken = jwt.sign({ user }, config.refreshTokenSecret, {
+      expiresIn: "3d",
     });
 
-    response.cookie("refresh_token", tokens.refreshToken, {
-      httpOnly: true,
-      secure: config.nodeEnv === "production",
-      maxAge: 3 * 24 * 60 * 60 * 1000,
-    });
-
-    response.send({
-      user: {
-        email: user.email,
-        name: user.name,
-      },
-      tokens,
-    });
+    response
+      .cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: config.nodeEnv === "production",
+        maxAge: 3 * 24 * 60 * 60 * 1000,
+      })
+      .header("Authorization", `Bearer ${accessToken}`)
+      .send({ user });
   } catch (error) {
     console.error(error);
     response.status(500).send({ error: "Error signing in" });
@@ -50,51 +46,34 @@ export async function signIn(request: Request, response: Response) {
 }
 
 export async function refreshToken(request: Request, response: Response) {
+  const refreshToken = request.cookies["refreshToken"];
+  if (!refreshToken) {
+    return response
+      .status(401)
+      .send("Access Denied. No refresh token provided.");
+  }
+
   try {
-    const refreshToken = request.cookies.refresh_token;
-
-    if (!refreshToken) {
-      return response.status(401).send({ error: "Refresh token not found" });
-    }
-
-    jwt.verify(
-      refreshToken,
-      config.refreshTokenSecret,
-      (err: VerifyErrors | null, user: any) => {
-        if (err) {
-          return response.status(403).send({ error: err.message });
-        }
-
-        const tokens = getJwtTokens({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-        });
-
-        response.cookie("refresh_token", tokens.refreshToken, {
-          httpOnly: true,
-          secure: config.nodeEnv === "production",
-          maxAge: 3 * 24 * 60 * 60 * 1000,
-        });
-
-        response.send({
-          user: {
-            email: user.email,
-            name: user.name,
-          },
-          tokens,
-        });
-      }
+    const decoded = jwt.verify(refreshToken, config.refreshTokenSecret) as {
+      user: User;
+    };
+    const accessToken = jwt.sign(
+      { user: decoded.user },
+      config.accessTokenSecret,
+      { expiresIn: "2m" }
     );
-  } catch (error: unknown) {
-    console.error(error);
-    response.status(500).send({ error: (error as Error).message });
+
+    response
+      .header("Authorization", `Bearer ${accessToken}`)
+      .send(decoded.user);
+  } catch (error) {
+    return response.status(400).send("Invalid refresh token.");
   }
 }
 
 export async function logout(request: Request, response: Response) {
   try {
-    response.clearCookie("refresh_token");
+    response.clearCookie("refreshToken");
     response.status(200).send({ message: "Logged out" });
   } catch (error: unknown) {
     console.error(error);
