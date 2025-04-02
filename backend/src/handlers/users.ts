@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import sql from "../database.js";
 import { PostgresError } from "postgres";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 export async function getUsers(_: Request, response: Response) {
   const result = await sql`SELECT id, name, email FROM users`;

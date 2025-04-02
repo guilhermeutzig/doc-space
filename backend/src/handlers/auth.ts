@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import sql from "../database.js";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import config from "../config/index.js";
-import jwt, { VerifyErrors } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { User } from "../types.js";
 
 export async function signIn(request: Request, response: Response) {

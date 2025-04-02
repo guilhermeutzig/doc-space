@@ -3,6 +3,7 @@ import { ref, computed, inject } from 'vue'
 import Cookies from 'js-cookie'
 import axios from 'axios'
 import router from '@/router'
+
 interface User {
   id: string
   email: string
